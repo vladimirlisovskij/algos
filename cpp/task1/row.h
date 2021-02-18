@@ -7,15 +7,14 @@
 #include <QValidator>
 #include <QVBoxLayout>
 
-class row : public QWidget
-{
+class row : public QWidget {
     Q_OBJECT
 private:
     QLabel* _lab;
     QLineEdit* _row;
 
 public:
-    explicit row(QString str, QWidget *parent = nullptr);
+    explicit row(const QString &lab_str, const QString &row_str, QWidget *parent = nullptr);
     void setValidator(const QValidator* val);
     QString text();
 

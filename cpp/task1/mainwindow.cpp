@@ -1,14 +1,12 @@
 #include "mainwindow.h"
 #include <QtMath>
 
-double MainWindow::_func(double x)
-{
+double MainWindow::_func(double x) {
     _cur_x = x;
     return _expression->value();
 }
 
-double MainWindow::_std_dev(const QVector<double> &values)
-{
+double MainWindow::_std_dev(const QVector<double> &values) {
     int size = values.size();
     double left = 0, right = 0;
     for (int i = 0; i < size; ++i){
@@ -22,8 +20,7 @@ double MainWindow::_std_dev(const QVector<double> &values)
     return qSqrt(left - right);
 }
 
-double MainWindow::_simson(double left, double right, int k)
-{
+double MainWindow::_simson(double left, double right, int k) {
     QVector<double> vals(k);
     double step = (right - left) / (double)k;
     double cur_step = left;
@@ -46,23 +43,22 @@ double MainWindow::_simson(double left, double right, int k)
     return res1 * res2;
 }
 
-double MainWindow::_adapt_simson(double left, double right, int start_k, int steps)
-{
+double MainWindow::_adapt_simson(double left, double right, int start_k, int steps) {
     double ans = _simson(left, right, start_k);
-    start_k <<= 1;
+    start_k <<= 1; // умножаем на 2
     double ans2 = _simson(left, right, start_k);
-    if (qAbs(ans - ans2) > _epsilon_val && steps) {
-        double middle = (left + right) / 2.0;
-        return _adapt_simson(left, middle, start_k, steps-1) + _adapt_simson(middle, right, start_k, steps-1);
+    int k = (1 << steps) - 1; // 1 << steps == pow(2, steps)
+    if (steps && qAbs(ans - ans2) / k > _epsilon_val) {
+        double middle = (left + right) / 2;
+        steps--;
+        return _adapt_simson(left, middle, start_k, steps) + _adapt_simson(middle, right, start_k, steps);
     }
     return ans2;
 }
 
-void MainWindow::_m_c(int n_rolls, int val)
-{
+void MainWindow::_m_c(int n_rolls, int val) {
     QVector<double> ok_x, ok_y, not_x, not_y, func_x, func_y;
-    double lenght = _right - _left;
-    double height = _up - _down;
+    double lenght = _right - _left, height = _up - _down;
     int counter = 0;
     for (int i = 0; i < n_rolls; ++i) {
         double x = _left + _gen->generateDouble() * lenght;
@@ -90,7 +86,7 @@ void MainWindow::_m_c(int n_rolls, int val)
     }
     double step = lenght / (double) val;
     double start = _left;
-    for (qint32 x = 0; x < val; ++x){
+    for (qint32 x = 0; x <= val; ++x){
         func_x.append(start);
         func_y.append(_func(start));
         start += step;
@@ -98,21 +94,20 @@ void MainWindow::_m_c(int n_rolls, int val)
     _m_c_result->setText(QString("MC resut: ") + QString::number(height * lenght * counter / (double)n_rolls, 'g', 10));
     _m_c_dev->setText(QString("MC dev: ") + QString::number(_std_dev(ok_y)));
     _ok_gra->setData(ok_x, ok_y);
-    _ok_gra->setPen(QPen(QColor("green")));
     _not_gra->setData(not_x, not_y);
-    _not_gra->setPen(QPen(QColor("red")));
     _func_gra->setData(func_x, func_y);
     _qplot->replot();
 }
 
-void MainWindow::_on_click()
-{
+void MainWindow::_on_click() {
     QString raw_func = _func_row->text();
     _parser->compile(raw_func.toStdString(), *_expression);
     _left = _left_row->text().toDouble();
     _right = _right_row->text().toDouble();
+    _left = qMin(_left, _right);
     _up = _up_row->text().toDouble();
     _down = _down_row->text().toDouble();
+    _down = qMin(_up, _down);
     _epsilon_val = qPow(10, _epsilon_row->text().toInt());
     _qplot->xAxis->setRange(_left, _right);
     _qplot->yAxis->setRange(_down, _up);
@@ -130,27 +125,29 @@ MainWindow::MainWindow(QWidget *parent)
     , _m_c_result(new QLabel())
     , _m_c_dev(new QLabel())
     , _simson_result(new QLabel())
-    , _func_row(new row("функция"))
-    , _left_row(new row("левая граница"))
-    , _right_row(new row("правая граница"))
-    , _up_row(new row("верхняя граница"))
-    , _down_row(new row("нижняя граница"))
-    , _epsilon_row(new row("точность"))
-    , _dot_row(new row("число точек"))
-    , _rol_row(new row("число бросков"))
-    , _steps_row(new row("число шагов рекурсии"))
-    , _main(new QVBoxLayout())
+    , _func_row(new row("функция", "1/(1 - 0.49*(sin(x))^2)"))
+    , _left_row(new row("левая граница", "0"))
+    , _right_row(new row("правая граница", "1.6"))
+    , _up_row(new row("верхняя граница", "2"))
+    , _down_row(new row("нижняя граница", "-0.5"))
+    , _epsilon_row(new row("точность", "-6"))
+    , _dot_row(new row("число точек", "100"))
+    , _rol_row(new row("число бросков", "10000"))
+    , _steps_row(new row("число шагов рекурсии", "10"))
     , _gen(new QRandomGenerator())
     , _expression(new exprtk::expression<double>())
     , _parser(new exprtk::parser<double>())
 {
-    _qplot->setFixedSize(300, 300);
+    _qplot->setFixedSize(600, 600);
     _ok_gra->setAdaptiveSampling(false);
     _ok_gra->setLineStyle(QCPGraph::lsNone);
     _ok_gra->setScatterStyle(QCPScatterStyle::ssCircle);
     _not_gra->setAdaptiveSampling(false);
     _not_gra->setLineStyle(QCPGraph::lsNone);
     _not_gra->setScatterStyle(QCPScatterStyle::ssCircle);
+    _ok_gra->setPen(QPen(QColor("green")));
+    _not_gra->setPen(QPen(QColor("red")));
+    _func_gra->setPen(QPen(QColor("black"), 5));
     exprtk::symbol_table<double> table;
     table.add_variable("x", _cur_x);
     table.add_constants();
@@ -159,41 +156,44 @@ MainWindow::MainWindow(QWidget *parent)
     lo.setNumberOptions(QLocale::RejectGroupSeparator);
     QDoubleValidator* val = new QDoubleValidator(this);
     val->setLocale(lo);
-    _main->addWidget(_qplot);
-    _main->addWidget(_plot_but);
-    _main->addWidget(_m_c_result);
-    _main->addWidget(_m_c_dev);
-    _main->addWidget(_simson_result);
-    _main->addWidget(_func_row);
-    _main->addWidget(_left_row);
+    QHBoxLayout* main = new QHBoxLayout();
+    QVBoxLayout* panel = new QVBoxLayout();
+    main->addWidget(_qplot);
+    panel->addWidget(_m_c_result);
+    panel->addWidget(_m_c_dev);
+    panel->addWidget(_simson_result);
+    panel->addWidget(_func_row);
+    panel->addWidget(_left_row);
     _left_row->setValidator(val);
-    _main->addWidget(_right_row);
+    panel->addWidget(_right_row);
     _right_row->setValidator(val);
-    _main->addWidget(_down_row);
+    panel->addWidget(_down_row);
     _down_row->setValidator(val);
-    _main->addWidget(_up_row);
+    panel->addWidget(_up_row);
     _up_row->setValidator(val);
-    _main->addWidget(_dot_row);
+    panel->addWidget(_dot_row);
     _dot_row->setValidator(val);
-    _main->addWidget(_rol_row);
+    panel->addWidget(_rol_row);
     _rol_row->setValidator(new QIntValidator());
-    _main->addWidget(_epsilon_row);
+    panel->addWidget(_epsilon_row);
     _epsilon_row->setValidator(new QIntValidator());
-    _main->addWidget(_steps_row);
+    panel->addWidget(_steps_row);
     _steps_row->setValidator(new QIntValidator());
-    _main->setSpacing(0);
-    _main->setContentsMargins(0, 0, 0, 0);
+    panel->addWidget(_plot_but);
+    panel->setSpacing(0);
+    panel->setContentsMargins(0, 0, 0, 0);
+    main->addLayout(panel);
+    main->setSpacing(0);
+    main->setContentsMargins(0, 0, 0, 0);
     QWidget *main_wig = new QWidget();
-    main_wig->setLayout(_main);
+    main_wig->setLayout(main);
     this->setCentralWidget(main_wig);
     connect(_plot_but, &QPushButton::clicked, this, &MainWindow::_on_click);
-    this->setFixedSize(300, 800);
+    this->setFixedSize(900, 600);
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
     delete _gen;
     delete _expression;
     delete _parser;
 }
-

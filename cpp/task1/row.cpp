@@ -1,9 +1,9 @@
 #include "row.h"
 
-row::row(QString str, QWidget *parent)
+row::row(const QString &lab_str, const QString &row_str, QWidget *parent)
     : QWidget(parent)
-    , _lab(new QLabel(str))
-    , _row(new QLineEdit)
+    , _lab(new QLabel(lab_str))
+    , _row(new QLineEdit(row_str))
 {
     QVBoxLayout* box = new QVBoxLayout();
     box->addWidget(_lab);
@@ -14,12 +14,10 @@ row::row(QString str, QWidget *parent)
     this->setContentsMargins(0, 0, 0, 0);
 }
 
-void row::setValidator(const QValidator *val)
-{
+void row::setValidator(const QValidator *val) {
     _row->setValidator(val);
 }
 
-QString row::text()
-{
+QString row::text() {
     return _row->text();
 }
