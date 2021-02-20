@@ -7,9 +7,9 @@ double MainWindow::_func(double x) {
 }
 
 double MainWindow::_std_dev(const QVector<double> &values) {
-    int size = values.size();
+    qint32 size = values.size();
     double left = 0, right = 0;
-    for (int i = 0; i < size; ++i){
+    for (qint32 i = 0; i < size; ++i){
         double val = values[i];
         left += val * val;
         right += val;
@@ -20,47 +20,46 @@ double MainWindow::_std_dev(const QVector<double> &values) {
     return qSqrt(left - right);
 }
 
-double MainWindow::_simson(double left, double right, int k) {
+double MainWindow::_simpson(double left, double right, qint32 k) {
     QVector<double> vals(k);
-    double step = (right - left) / (double)k;
+    double step = (right - left) / k;
     double cur_step = left;
     for (double& i: vals) {
         i = _func(cur_step);
         cur_step += step;
     }
-    double res1 = (right - left) / 3.0 / k;
+    double res1 = (right - left) / 3 / k;
     double res2 = vals.front() + vals.back();
     double temp = 0;
-    for (int i = 1; i < k - 2; i += 2) {
+    for (qint32 i = 1; i < k - 2; i += 2) {
         temp += vals[i];
     }
     res2 += 4 * temp;
     temp = 0;
-    for (int i = 2; i < k - 3; i += 2) {
+    for (qint32 i = 2; i < k - 3; i += 2) {
         temp += vals[i];
     }
     res2 += 2 * temp;
     return res1 * res2;
 }
 
-double MainWindow::_adapt_simson(double left, double right, int start_k, int steps) {
-    double ans = _simson(left, right, start_k);
+double MainWindow::_adapt_simpson(double left, double right, qint32 start_k, qint32 steps) {
+    double ans = _simpson(left, right, start_k);
     start_k <<= 1; // умножаем на 2
-    double ans2 = _simson(left, right, start_k);
-    int k = (1 << steps) - 1; // 1 << steps == pow(2, steps)
-    if (steps && qAbs(ans - ans2) / k > _epsilon_val) {
+    double ans2 = _simpson(left, right, start_k);
+    if (steps && qAbs(ans - ans2) > _epsilon_val * 15) {  // оценка по Рунге
         double middle = (left + right) / 2;
         steps--;
-        return _adapt_simson(left, middle, start_k, steps) + _adapt_simson(middle, right, start_k, steps);
+        return _adapt_simpson(left, middle, start_k, steps) + _adapt_simpson(middle, right, start_k, steps);
     }
     return ans2;
 }
 
-void MainWindow::_m_c(int n_rolls, int val) {
+void MainWindow::_m_c(qint32 n_rolls, qint32 val) {
     QVector<double> ok_x, ok_y, not_x, not_y, func_x, func_y;
     double lenght = _right - _left, height = _up - _down;
-    int counter = 0;
-    for (int i = 0; i < n_rolls; ++i) {
+    qint32 counter = 0;
+    for (qint32 i = 0; i < n_rolls; ++i) {
         double x = _left + _gen->generateDouble() * lenght;
         double y = _down + _gen->generateDouble() * height;
         double true_y = _func(x);
@@ -111,7 +110,7 @@ void MainWindow::_on_click() {
     _epsilon_val = qPow(10, _epsilon_row->text().toInt());
     _qplot->xAxis->setRange(_left, _right);
     _qplot->yAxis->setRange(_down, _up);
-    _simson_result->setText(QString("Simson resut: ") + QString::number(_adapt_simson(_left, _right, 2, 10), 'g', 10));
+    _simpson_result->setText(QString("simpson resut: ") + QString::number(_adapt_simpson(_left, _right, 2, 10), 'g', 10));
     _m_c(_rol_row->text().toInt(), _dot_row->text().toInt());
 }
 
@@ -124,7 +123,7 @@ MainWindow::MainWindow(QWidget *parent)
     , _plot_but(new QPushButton("Построить"))
     , _m_c_result(new QLabel())
     , _m_c_dev(new QLabel())
-    , _simson_result(new QLabel())
+    , _simpson_result(new QLabel())
     , _func_row(new row("функция", "1/(1 - 0.49*(sin(x))^2)"))
     , _left_row(new row("левая граница", "0"))
     , _right_row(new row("правая граница", "1.6"))
@@ -161,7 +160,7 @@ MainWindow::MainWindow(QWidget *parent)
     main->addWidget(_qplot);
     panel->addWidget(_m_c_result);
     panel->addWidget(_m_c_dev);
-    panel->addWidget(_simson_result);
+    panel->addWidget(_simpson_result);
     panel->addWidget(_func_row);
     panel->addWidget(_left_row);
     _left_row->setValidator(val);

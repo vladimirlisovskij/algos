@@ -17,7 +17,7 @@ private:
     QCustomPlot *_qplot;
     QCPGraph *_ok_gra, *_not_gra, *_func_gra;
     QPushButton *_plot_but;
-    QLabel *_m_c_result, *_m_c_dev, *_simson_result;
+    QLabel *_m_c_result, *_m_c_dev, *_simpson_result;
     row *_func_row, *_left_row, *_right_row, *_up_row, *_down_row, *_epsilon_row, *_dot_row, *_rol_row, *_steps_row;
     QRandomGenerator *_gen;
     exprtk::expression<double> *_expression;
@@ -26,8 +26,8 @@ private:
     double _cur_x, _epsilon_val;
     double _func(double x);
     double _std_dev(const QVector<double>& values);
-    double _simson(double left, double right, int k);
-    double _adapt_simson(double left, double right, int start_k, int steps);
+    double _simpson(double left, double right, int k);
+    double _adapt_simpson(double left, double right, int start_k, int steps);
     void _m_c(int n_rolls, int val);
     void _on_click();
 public:
