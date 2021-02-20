@@ -21,22 +21,22 @@ double MainWindow::_std_dev(const QVector<double> &values) {
 }
 
 double MainWindow::_simpson(double left, double right, qint32 k) {
-    QVector<double> vals(k);
+    QVector<double> vals(k + 1);
     double step = (right - left) / k;
     double cur_step = left;
-    for (double& i: vals) {
-        i = _func(cur_step);
+    for (qint32 i = 0; i <= k; ++i) {
+        vals[i] = _func(cur_step);
         cur_step += step;
     }
     double res1 = (right - left) / 3 / k;
     double res2 = vals.front() + vals.back();
     double temp = 0;
-    for (qint32 i = 1; i < k - 2; i += 2) {
+    for (qint32 i = 1; i <= k - 1; i += 2) {
         temp += vals[i];
     }
     res2 += 4 * temp;
     temp = 0;
-    for (qint32 i = 2; i < k - 3; i += 2) {
+    for (qint32 i = 2; i <= k - 1; i += 2) {
         temp += vals[i];
     }
     res2 += 2 * temp;
@@ -96,7 +96,6 @@ void MainWindow::_m_c(qint32 n_rolls, qint32 val) {
     _ok_gra->setData(ok_x, ok_y);
     _not_gra->setData(not_x, not_y);
     _func_gra->setData(func_x, func_y);
-    _qplot->replot();
 }
 
 void MainWindow::_on_click() {
@@ -114,6 +113,7 @@ void MainWindow::_on_click() {
     _simpson_gra->data()->clear();
     _simpson_result->setText(QString("simpson resut: ") + QString::number(_adapt_simpson(_left, _right, 2, _steps_row->text().toInt()), 'g', 10));
     _m_c(_rol_row->text().toInt(), _dot_row->text().toInt());
+    _qplot->replot();
 }
 
 MainWindow::MainWindow(QWidget *parent)
