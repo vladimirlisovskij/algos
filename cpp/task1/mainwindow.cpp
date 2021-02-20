@@ -49,6 +49,7 @@ double MainWindow::_adapt_simpson(double left, double right, qint32 start_k, qin
     double ans2 = _simpson(left, right, start_k);
     if (steps && qAbs(ans - ans2) > _epsilon_val * 15) {  // оценка по Рунге
         double middle = (left + right) / 2;
+        _simpson_gra->addData(middle, _func(middle));
         steps--;
         return _adapt_simpson(left, middle, start_k, steps) + _adapt_simpson(middle, right, start_k, steps);
     }
@@ -110,7 +111,8 @@ void MainWindow::_on_click() {
     _epsilon_val = qPow(10, _epsilon_row->text().toInt());
     _qplot->xAxis->setRange(_left, _right);
     _qplot->yAxis->setRange(_down, _up);
-    _simpson_result->setText(QString("simpson resut: ") + QString::number(_adapt_simpson(_left, _right, 2, 10), 'g', 10));
+    _simpson_gra->data()->clear();
+    _simpson_result->setText(QString("simpson resut: ") + QString::number(_adapt_simpson(_left, _right, 2, _steps_row->text().toInt()), 'g', 10));
     _m_c(_rol_row->text().toInt(), _dot_row->text().toInt());
 }
 
@@ -120,6 +122,7 @@ MainWindow::MainWindow(QWidget *parent)
     , _ok_gra(_qplot->addGraph())
     , _not_gra(_qplot->addGraph())
     , _func_gra(_qplot->addGraph())
+    , _simpson_gra(_qplot->addGraph())
     , _plot_but(new QPushButton("Построить"))
     , _m_c_result(new QLabel())
     , _m_c_dev(new QLabel())
@@ -140,12 +143,16 @@ MainWindow::MainWindow(QWidget *parent)
     _qplot->setFixedSize(600, 600);
     _ok_gra->setAdaptiveSampling(false);
     _ok_gra->setLineStyle(QCPGraph::lsNone);
-    _ok_gra->setScatterStyle(QCPScatterStyle::ssCircle);
+    _ok_gra->setScatterStyle(QCPScatterStyle::ssDot);
     _not_gra->setAdaptiveSampling(false);
     _not_gra->setLineStyle(QCPGraph::lsNone);
-    _not_gra->setScatterStyle(QCPScatterStyle::ssCircle);
-    _ok_gra->setPen(QPen(QColor("green")));
-    _not_gra->setPen(QPen(QColor("red")));
+    _not_gra->setScatterStyle(QCPScatterStyle::ssDot);
+    _simpson_gra->setAdaptiveSampling(false);
+    _simpson_gra->setLineStyle(QCPGraph::lsNone);
+    _simpson_gra->setScatterStyle(QCPScatterStyle::ssDot);
+    _ok_gra->setPen(QPen(QColor("green"), 5));
+    _not_gra->setPen(QPen(QColor("blue"), 5));
+    _simpson_gra->setPen(QPen(QColor("red"), 5));
     _func_gra->setPen(QPen(QColor("black"), 5));
     exprtk::symbol_table<double> table;
     table.add_variable("x", _cur_x);
