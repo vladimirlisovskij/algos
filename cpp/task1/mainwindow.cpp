@@ -28,7 +28,7 @@ double MainWindow::_simpson(double left, double right, qint32 k) {
         vals[i] = _func(cur_step);
         cur_step += step;
     }
-    double res1 = (right - left) / 3 / k;
+    double res1 = (right - left) / (3 * k);
     double res2 = vals.front() + vals.back();
     double temp = 0;
     for (qint32 i = 1; i <= k - 1; i += 2) {
@@ -56,46 +56,37 @@ double MainWindow::_adapt_simpson(double left, double right, qint32 start_k, qin
     return ans2;
 }
 
-void MainWindow::_m_c(qint32 n_rolls, qint32 val) {
-    QVector<double> ok_x, ok_y, not_x, not_y, func_x, func_y;
-    double lenght = _right - _left, height = _up - _down;
+void MainWindow::_m_c(qint32 n_rolls, qint32 n) {
+    QVector<double> vals(n);
+    double lenght = _right - _left;
+    double height = _up - _down;
+    double square = lenght * height;
     qint32 counter = 0;
-    for (qint32 i = 0; i < n_rolls; ++i) {
-        double x = _left + _gen->generateDouble() * lenght;
-        double y = _down + _gen->generateDouble() * height;
-        double true_y = _func(x);
-        if (true_y >= 0) {
-            if (true_y >= y && y >= 0) {
-                ok_x.append(x);
-                ok_y.append(y);
-                counter++;
+    for (qint32 epoch = 1; epoch <= n; ++epoch){
+        for (qint32 i = 0; i < n_rolls; ++i) {
+            double x = _left + _gen->generateDouble() * lenght;
+            double y = _down + _gen->generateDouble() * height;
+            double true_y = _func(x);
+            if (true_y >= 0) {
+                if (true_y >= y && y >= 0) {
+                    _ok_gra->addData(x, y);
+                    counter++;
+                } else {
+                    _not_gra->addData(x, y);
+                }
             } else {
-                not_x.append(x);
-                not_y.append(y);
-            }
-        } else {
-            if (true_y <= y && y <= 0) {
-                ok_x.append(x);
-                ok_y.append(y);
-                counter--;
-            } else {
-                not_x.append(x);
-                not_y.append(y);
+                if (true_y <= y && y <= 0) {
+                    _ok_gra->addData(x, y);
+                    counter--;
+                } else {
+                    _not_gra->addData(x, y);
+                }
             }
         }
+        vals.append(square * counter / (epoch * n_rolls));
     }
-    double step = lenght / (double) val;
-    double start = _left;
-    for (qint32 x = 0; x <= val; ++x){
-        func_x.append(start);
-        func_y.append(_func(start));
-        start += step;
-    }
-    _m_c_result->setText(QString("MC resut: ") + QString::number(height * lenght * counter / (double)n_rolls, 'g', 10));
-    _m_c_dev->setText(QString("MC dev: ") + QString::number(_std_dev(ok_y)));
-    _ok_gra->setData(ok_x, ok_y);
-    _not_gra->setData(not_x, not_y);
-    _func_gra->setData(func_x, func_y);
+    _m_c_result->setText(QString("MC resut: ") + QString::number(vals.back(), 'g', 10));
+    _m_c_dev->setText(QString("MC dev: ") + QString::number(_std_dev(vals), 'g', 10));
 }
 
 void MainWindow::_on_click() {
@@ -112,7 +103,18 @@ void MainWindow::_on_click() {
     _qplot->yAxis->setRange(_down, _up);
     _simpson_gra->data()->clear();
     _simpson_result->setText(QString("simpson resut: ") + QString::number(_adapt_simpson(_left, _right, 2, _steps_row->text().toInt()), 'g', 10));
-    _m_c(_rol_row->text().toInt(), _dot_row->text().toInt());
+    _ok_gra->data()->clear();
+    _not_gra->data()->clear();
+    _func_gra->data()->clear();
+    _m_c(_rol_row->text().toInt(), qMax(_epoch_row->text().toInt(), 1));
+    _func_gra->data()->clear();
+    qint32 val = _dot_row->text().toInt();
+    double step = (_right - _left) /  val;
+    double start = _left;
+    for (qint32 x = 0; x <= val; ++x){
+        _func_gra->addData(start, _func(start));
+        start += step;
+    }
     _qplot->replot();
 }
 
@@ -135,6 +137,7 @@ MainWindow::MainWindow(QWidget *parent)
     , _epsilon_row(new row("точность", "-6"))
     , _dot_row(new row("число точек", "100"))
     , _rol_row(new row("число бросков", "10000"))
+    , _epoch_row(new row("число попыток", "10"))
     , _steps_row(new row("число шагов рекурсии", "10"))
     , _gen(new QRandomGenerator())
     , _expression(new exprtk::expression<double>())
@@ -181,6 +184,8 @@ MainWindow::MainWindow(QWidget *parent)
     _dot_row->setValidator(val);
     panel->addWidget(_rol_row);
     _rol_row->setValidator(new QIntValidator());
+    panel->addWidget(_epoch_row);
+    _epoch_row->setValidator(new QIntValidator());
     panel->addWidget(_epsilon_row);
     _epsilon_row->setValidator(new QIntValidator());
     panel->addWidget(_steps_row);
