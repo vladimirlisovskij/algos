@@ -1,4 +1,4 @@
-QT       += core gui printsupport
+QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -10,24 +10,16 @@ CONFIG += c++11
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp \
-    qcustomplot-source/qcustomplot.cpp
+    mainwindow.cpp
 
 HEADERS += \
-    exprtk/exprtk.hpp \
     indicator.h \
     mainwindow.h \
-    qcustomplot-source/qcustomplot.h \
+    matrix.h \
+    matrix_widget.h \
     row.h
-
-FORMS += \
-    mainwindow.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
-DISTFILES += \
-    qcustomplot-source/GPL.txt \
-    qcustomplot-source/changelog.txt

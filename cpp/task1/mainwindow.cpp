@@ -90,6 +90,7 @@ void MainWindow::_m_c(qint32 n_rolls, qint32 n) {
 }
 
 void MainWindow::_on_click() {
+    _ind->set("ВЫЧИСЛЕНИЯ", QColor("red"));
     QString raw_func = _func_row->text();
     _parser->compile(raw_func.toStdString(), *_expression);
     _left = _left_row->text().toDouble();
@@ -102,12 +103,12 @@ void MainWindow::_on_click() {
     _qplot->xAxis->setRange(_left, _right);
     _qplot->yAxis->setRange(_down, _up);
     _simpson_gra->data()->clear();
-    _simpson_result->setText(QString("simpson resut: ") + QString::number(_adapt_simpson(_left, _right, 2, _steps_row->text().toInt()), 'g', 10));
     _ok_gra->data()->clear();
     _not_gra->data()->clear();
     _func_gra->data()->clear();
+//    _qplot->replot();
+    _simpson_result->setText(QString("simpson resut: ") + QString::number(_adapt_simpson(_left, _right, 2, _steps_row->text().toInt()), 'g', 10));
     _m_c(_rol_row->text().toInt(), qMax(_epoch_row->text().toInt(), 1));
-    _func_gra->data()->clear();
     qint32 val = _dot_row->text().toInt();
     double step = (_right - _left) /  val;
     double start = _left;
@@ -116,6 +117,7 @@ void MainWindow::_on_click() {
         start += step;
     }
     _qplot->replot();
+    _ind->set("OK", QColor("green"));
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -125,6 +127,7 @@ MainWindow::MainWindow(QWidget *parent)
     , _not_gra(_qplot->addGraph())
     , _func_gra(_qplot->addGraph())
     , _simpson_gra(_qplot->addGraph())
+    , _ind(new indicator())
     , _plot_but(new QPushButton("Построить"))
     , _m_c_result(new QLabel())
     , _m_c_dev(new QLabel())
@@ -168,6 +171,7 @@ MainWindow::MainWindow(QWidget *parent)
     QHBoxLayout* main = new QHBoxLayout();
     QVBoxLayout* panel = new QVBoxLayout();
     main->addWidget(_qplot);
+    panel->addWidget(_ind);
     panel->addWidget(_m_c_result);
     panel->addWidget(_m_c_dev);
     panel->addWidget(_simpson_result);
