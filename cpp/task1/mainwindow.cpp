@@ -8,16 +8,16 @@ double MainWindow::_func(double x) {
 
 double MainWindow::_std_dev(const QVector<double> &values) {
     qint32 size = values.size();
-    double left = 0, right = 0;
-    for (qint32 i = 0; i < size; ++i){
-        double val = values[i];
-        left += val * val;
-        right += val;
-    }
-    left /= size;
-    right /= size;
-    right *= right;
-    return qSqrt(left - right);
+        double left = 0, right = 0;
+        for (qint32 i = 0; i < size; ++i){
+            double val = values[i];
+            left += val * val;
+            right += val;
+        }
+        left /= size;
+        right /= size;
+        right *= right;
+        return qSqrt(left - right);
 }
 
 double MainWindow::_simpson(double left, double right, qint32 k) {
@@ -61,8 +61,8 @@ void MainWindow::_m_c(qint32 n_rolls, qint32 n) {
     double lenght = _right - _left;
     double height = _up - _down;
     double square = lenght * height;
-    qint32 counter = 0;
-    for (qint32 epoch = 1; epoch <= n; ++epoch){
+    for (qint32 epoch = 0; epoch < n; ++epoch){
+        qint32 counter = 0;
         for (qint32 i = 0; i < n_rolls; ++i) {
             double x = _left + _gen->generateDouble() * lenght;
             double y = _down + _gen->generateDouble() * height;
@@ -83,9 +83,9 @@ void MainWindow::_m_c(qint32 n_rolls, qint32 n) {
                 }
             }
         }
-        vals.append(square * counter / (epoch * n_rolls));
+        vals[epoch] = square * counter / n_rolls;
     }
-    _m_c_result->setText(QString("MC resut: ") + QString::number(vals.back(), 'g', 10));
+    _m_c_result->setText(QString("MC resut: ") + QString::number(std::accumulate(vals.begin(), vals.end(), 0.0)/(double)n, 'g', 10));
     _m_c_dev->setText(QString("MC dev: ") + QString::number(_std_dev(vals), 'g', 10));
 }
 
