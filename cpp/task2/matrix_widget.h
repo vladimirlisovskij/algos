@@ -64,7 +64,7 @@ public:
         _table->setRowCount(rows);
         for (qint32 i = 0; i < _row; ++i) {
             for (qint32 j = 0; j < _col; ++j) {
-                QLineEdit* line = new QLineEdit(QString::number(200 * _gen->generateDouble() - 100));
+                QLineEdit* line = new QLineEdit(QString::number(0));
                 line->setValidator(_val);
                 _table->setCellWidget(i, j, line);
             }
