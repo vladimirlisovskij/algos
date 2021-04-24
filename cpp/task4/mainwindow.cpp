@@ -108,11 +108,17 @@ void MainWindow::on_pushButton_2_clicked()
     expression.register_symbol_table(table);
     parser.compile(ui->cSplFun->text().toStdString() , expression);
 
-    QVector<QPair<double,double>> points (parts+1);
-    for (qint32 i = 0; i <= parts; ++i) {
-        points[i] = {start, expression.value()};
-        start += it;
-    }
+//    QVector<QPair<double,double>> points (parts+1);
+//    for (qint32 i = 0; i <= parts; ++i) {
+//        points[i] = {start, expression.value()};
+//        start += it;
+//    }
+
+    QVector<QPair<double,double>> points {
+        {1, 12},
+        {2, 2},
+        {3, -1}
+    };
 
     auto res = Helper::getSplines(points);
 
@@ -154,18 +160,22 @@ void MainWindow::on_pushButton_3_clicked()
     expression.register_symbol_table(table);
     parser.compile(ui->cSplFun->text().toStdString() , expression);
 
-    QVector<double> x(steps + 1);
-    double temp = startX;
-    for (int i = 0; i <= steps; ++i) {
-        x[i] = temp;
-        temp += it;
-    }
+//    QVector<double> x(steps + 1);
+//    double temp = startX;
+//    for (int i = 0; i <= steps; ++i) {
+//        x[i] = temp;
+//        temp += it;
+//    }
 
-    QVector<double> y = x;
-    for (int i = 0; i <= steps; ++i) {
-        xVal = y[i];
-        y[i] = expression.value();
-    }
+//    QVector<double> y = x;
+//    for (int i = 0; i <= steps; ++i) {
+//        xVal = y[i];
+//        y[i] = expression.value();
+//    }
+
+    steps = 2;
+    QVector<double> x = {1, 2, 3};
+    QVector<double> y = {12, 2, -1};
 
     dotGra->data()->clear();
     funGra->data()->clear();
@@ -211,9 +221,9 @@ void MainWindow::on_pushButton_3_clicked()
             double t = (tt - sX)/it;
             double point =
                     (2*t*t*t - 3*t*t + 1)*pk +
-                    (t*t*t - 2*t*t + t)*it*mk +
+                    (t*t*t - 2*t*t + t)*mk +
                     (-2*t*t*t + 3*t*t)*pk1 +
-                    (t*t*t - t*t)*it*mk1;
+                    (t*t*t - t*t)*mk1;
             funGra->addData(tt, point);
             minY = qMin(point, minY);
             maxY = qMax(point, maxY);
@@ -230,6 +240,7 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::on_pushButton_4_clicked()
 {
     qint32 steps = ui->bezStepBox->text().toInt();
+    steps = 4;
     QStringList xStr = ui->bezxRow->text().split(" ");
     QVector<double> x;
     foreach (QString str, xStr) {

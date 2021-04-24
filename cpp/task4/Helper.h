@@ -65,9 +65,6 @@ private:
         int columns = nums[0].size();
         for (int i = 0; i < rows; ++i) { // rows - 1
             std::sort(nums.begin() + i, nums.end(), [i](dobVec a, dobVec b){return qAbs(a[i]) > qAbs(b[i]);});
-            if (nums[i][i] == 0 && (nums[i][i] != nums[rows - 1][i])) {
-                std::swap(nums[i][i], nums[rows - 1][i]);
-            }
             for (int j = i + 1; j < columns; ++j) {
                 nums[i][j] /= nums[i][i];
             }
